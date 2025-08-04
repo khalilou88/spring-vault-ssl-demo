@@ -1,0 +1,37 @@
+server:
+  port: 8444
+  ssl:
+    enabled: true
+    bundle: "server-b-ssl"
+
+spring:
+  application:
+    name: server-b
+  cloud:
+    vault:
+      host: localhost
+      port: 8200
+      scheme: http
+      authentication: TOKEN
+      token: demo-root-token
+      kv:
+        enabled: true
+        backend: secret
+        default-context: ssl-certs
+
+  ssl:
+    bundle:
+      pem:
+        server-b-ssl:
+          reload-on-update: true
+          keystore:
+            certificate: "vault:secret/ssl-certs/server-b:certificate"
+            private-key: "vault:secret/ssl-certs/server-b:private-key"
+          truststore:
+            certificate: "vault:secret/ssl-certs/server-b:ca-certificate"
+
+logging:
+  level:
+    com.demo: DEBUG
+    org.springframework.vault: DEBUG
+    org.springframework.cloud.vault: DEBUG
