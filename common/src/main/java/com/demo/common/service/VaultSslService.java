@@ -1,5 +1,7 @@
 package com.demo.common.service;
 
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -102,5 +104,39 @@ public class VaultSslService {
         trustStore.setCertificateEntry("ca", caCertificate);
 
         return trustStore;
+    }
+
+
+    public SslContext createNettySslContext(String secretPath) {
+        try {
+            VaultResponse response = vaultTemplate.read(secretPath);
+
+            if (response == null || response.getData() == null) {
+                throw new RuntimeException("No data found at path: " + secretPath);
+            }
+
+            String certificatePem = (String) response.getData().get("certificate");
+            String privateKeyPem = (String) response.getData().get("private-key");
+            String caCertificatePem = (String) response.getData().get("ca-certificate");
+
+            logger.info("Retrieved SSL certificates from Vault for Netty at path: {}", secretPath);
+
+            // Create KeyStore and TrustStore
+            KeyStore keyStore = createKeyStore(certificatePem, privateKeyPem);
+            KeyStore trustStore = createTrustStore(caCertificatePem);
+
+            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            keyManagerFactory.init(keyStore, "changeit".toCharArray());
+
+            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            trustManagerFactory.init(trustStore);
+
+            // Netty SslContext from key/trust managers
+            return SslContextBuilder.forClient().keyManager(keyManagerFactory).trustManager(trustManagerFactory).build();
+
+        } catch (Exception e) {
+            logger.error("Failed to create Netty SSL context from Vault", e);
+            throw new RuntimeException("Failed to create Netty SSL context", e);
+        }
     }
 }

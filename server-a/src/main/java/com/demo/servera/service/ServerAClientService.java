@@ -10,9 +10,7 @@ import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
-import reactor.netty.tcp.SslProvider;
 
-import javax.net.ssl.SSLContext;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -35,14 +33,11 @@ public class ServerAClientService {
     private WebClient createWebClient() {
         try {
             // Get SSL context from Vault for client authentication
-            SSLContext sslContext = vaultSslService.createSslContext("secret/data/ssl-certs/server-a");
+            io.netty.handler.ssl.SslContext nettySslContext = vaultSslService.createNettySslContext("secret/data/ssl-certs/server-a");
 
-            HttpClient httpClient = HttpClient.create()
-                    .secure(sslSpec -> sslSpec.sslContext(sslContext));
+            HttpClient httpClient = HttpClient.create().secure(sslSpec -> sslSpec.sslContext(nettySslContext));
 
-            return WebClient.builder()
-                    .clientConnector(new ReactorClientHttpConnector(httpClient))
-                    .build();
+            return WebClient.builder().clientConnector(new ReactorClientHttpConnector(httpClient)).build();
 
         } catch (Exception e) {
             logger.error("Failed to create SSL-enabled WebClient", e);
@@ -54,30 +49,17 @@ public class ServerAClientService {
     public MessageResponse sendMessageToServerB(String message) {
         logger.info("Sending message to Server B: {}", message);
 
-        MessageRequest request = new MessageRequest(
-                message,
-                LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-        );
+        MessageRequest request = new MessageRequest(message, LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
 
         try {
-            MessageResponse response = webClient
-                    .post()
-                    .uri(serverBUrl + "/api/v1/message")
-                    .bodyValue(request)
-                    .retrieve()
-                    .bodyToMono(MessageResponse.class)
-                    .block();
+            MessageResponse response = webClient.post().uri(serverBUrl + "/api/v1/message").bodyValue(request).retrieve().bodyToMono(MessageResponse.class).block();
 
             logger.info("Received response from Server B: {}", response.getResponse());
             return response;
 
         } catch (Exception e) {
             logger.error("Failed to communicate with Server B", e);
-            return new MessageResponse(
-                    "Failed to communicate with Server B: " + e.getMessage(),
-                    "server-a-error",
-                    LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-            );
+            return new MessageResponse("Failed to communicate with Server B: " + e.getMessage(), "server-a-error", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
         }
     }
 }
