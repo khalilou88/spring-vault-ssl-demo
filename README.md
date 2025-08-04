@@ -72,6 +72,10 @@ This creates:
 ### 2. Start Vault
 
 ```bash
+# Make sure the init script is executable
+chmod +x vault-init.sh
+
+# Start Vault and initialize with certificates
 docker compose up -d
 ```
 
