@@ -5,6 +5,14 @@
 
 set -e
 
+# Set Vault address and token
+export VAULT_ADDR="http://127.0.0.1:8200"
+export VAULT_TOKEN="demo-root-token"
+
+echo "Environment variables set:"
+echo "  VAULT_ADDR=$VAULT_ADDR"
+echo "  VAULT_TOKEN=$VAULT_TOKEN"
+
 echo "Waiting for Vault to be ready..."
 until vault status > /dev/null 2>&1; do
     echo "Vault not ready, waiting..."
@@ -12,7 +20,7 @@ until vault status > /dev/null 2>&1; do
 done
 
 echo "Vault is ready. Authenticating..."
-vault auth -method=token token=${VAULT_TOKEN}
+vault login -method=token token=${VAULT_TOKEN}
 
 echo "Enabling KV secrets engine..."
 vault secrets enable -path=secret kv-v2 || echo "KV engine already enabled"
