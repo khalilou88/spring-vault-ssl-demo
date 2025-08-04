@@ -24,6 +24,7 @@ openssl req -new -key $CERT_DIR/server-a-key.pem -out $CERT_DIR/server-a.csr \
 
 # Create extensions file for Server A
 cat > $CERT_DIR/server-a.ext << EOF
+[v3_req]
 authorityKeyIdentifier=keyid,issuer
 basicConstraints=CA:FALSE
 keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
@@ -49,6 +50,7 @@ openssl req -new -key $CERT_DIR/server-b-key.pem -out $CERT_DIR/server-b.csr \
 
 # Create extensions file for Server B
 cat > $CERT_DIR/server-b.ext << EOF
+[v3_req]
 authorityKeyIdentifier=keyid,issuer
 basicConstraints=CA:FALSE
 keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
