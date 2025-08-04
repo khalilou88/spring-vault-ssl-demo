@@ -27,15 +27,15 @@ vault secrets enable -path=secret kv-v2 || echo "KV engine already enabled"
 
 echo "Storing Server A certificates..."
 vault kv put secret/ssl-certs/server-a \
-    certificate="$(cat /certificates/server-a-cert.pem)" \
-    private-key="$(cat /certificates/server-a-key.pem)" \
-    ca-certificate="$(cat /certificates/ca-cert.pem)"
+    certificate="$(cat ./certificates/server-a-cert.pem)" \
+    private-key="$(cat ./certificates/server-a-key.pem)" \
+    ca-certificate="$(cat ./certificates/ca-cert.pem)"
 
 echo "Storing Server B certificates..."
 vault kv put secret/ssl-certs/server-b \
-    certificate="$(cat /certificates/server-b-cert.pem)" \
-    private-key="$(cat /certificates/server-b-key.pem)" \
-    ca-certificate="$(cat /certificates/ca-cert.pem)"
+    certificate="$(cat ./certificates/server-b-cert.pem)" \
+    private-key="$(cat ./certificates/server-b-key.pem)" \
+    ca-certificate="$(cat ./certificates/ca-cert.pem)"
 
 echo "Verifying stored certificates..."
 vault kv get secret/ssl-certs/server-a
