@@ -2,7 +2,8 @@ server:
   port: 8444
   ssl:
     enabled: true
-    bundle: "server-b-ssl"
+#    bundle: "server-b-ssl"
+    bundle: "vault:secret/data/ssl-certs/server-b"
 
 spring:
   application:
@@ -19,19 +20,20 @@ spring:
         backend: secret
         default-context: ssl-certs
 
-  ssl:
-    bundle:
-      pem:
-        server-b-ssl:
-          reload-on-update: true
-          keystore:
-            certificate: "vault:secret/ssl-certs/server-b:certificate"
-            private-key: "vault:secret/ssl-certs/server-b:private-key"
-          truststore:
-            certificate: "vault:secret/ssl-certs/server-b:ca-certificate"
+#  ssl:
+#    bundle:
+#      pem:
+#        server-b-ssl:
+#          reload-on-update: true
+#          keystore:
+#            certificate: "vault:secret/ssl-certs/server-b:certificate"
+#            private-key: "vault:secret/ssl-certs/server-b:private-key"
+#          truststore:
+#            certificate: "vault:secret/ssl-certs/server-b:ca-certificate"
 
 logging:
   level:
     com.demo: DEBUG
     org.springframework.vault: DEBUG
     org.springframework.cloud.vault: DEBUG
+    io.github.gridadev: DEBUG
