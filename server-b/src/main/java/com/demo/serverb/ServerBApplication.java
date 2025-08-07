@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
-@ComponentScan(basePackages = {"com.demo.serverb", "com.demo.common"})
+@ComponentScan(basePackages = {"com.demo.serverb", "com.demo.common", "io.github.gridadev"})
 public class ServerBApplication {
     public static void main(String[] args) {
         SpringApplication.run(ServerBApplication.class, args);
