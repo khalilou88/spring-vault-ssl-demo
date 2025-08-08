@@ -28,8 +28,7 @@ spring-vault-ssl-bundle-demo/
 ├── common/                 # Shared DTOs and services
 │   ├── src/main/java/
 │   │   └── com/demo/common/
-│   │       ├── dto/        # MessageRequest, MessageResponse
-│   │       └── service/    # VaultSslService
+│   │       └──dto/        # MessageRequest, MessageResponse
 │   └── pom.xml
 ├── server-a/               # Server A (Client + Server)
 │   ├── src/main/java/
