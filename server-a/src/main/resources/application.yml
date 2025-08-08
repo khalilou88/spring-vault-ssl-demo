@@ -25,9 +25,9 @@ spring:
         server-a-ssl:
           reload-on-update: false
           keystore:
-            certificate: "vault:secret/ssl-certs/server-a"
+            certificate: "vault:secret/data/ssl-certs/server-a"
           truststore:
-            certificate: "vault:secret/ssl-certs/server-a"
+            certificate: "vault:secret/data/ssl-certs/server-a"
 
 app:
   server-b:
