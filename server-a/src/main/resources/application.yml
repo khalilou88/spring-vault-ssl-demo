@@ -27,7 +27,7 @@ spring:
           keystore:
             certificate: "vault:secret/data/ssl-certs/server-a"
           truststore:
-            certificate: "vault:secret/data/ssl-certs/server-a"
+            certificate: "vault:secret/data/ssl-certs/server-a:ca-certificate"
 
 app:
   server-b:
