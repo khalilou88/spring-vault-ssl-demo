@@ -170,10 +170,10 @@ spring:
       pem:
         server-a-ssl:
           keystore:
-            certificate: "vault:secret/ssl-certs/server-a:certificate"
-            private-key: "vault:secret/ssl-certs/server-a:private-key"
+            certificate: "vault:secret/data/ssl-certs/server-a:certificate"
+            private-key: "vault:secret/data/ssl-certs/server-a:private-key"
           truststore:
-            certificate: "vault:secret/ssl-certs/server-a:ca-certificate"
+            certificate: "vault:secret/data/ssl-certs/server-a:ca-certificate"
 ```
 
 ### Vault Authentication
