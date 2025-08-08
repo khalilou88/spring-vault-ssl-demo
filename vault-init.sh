@@ -42,6 +42,3 @@ vault kv get secret/ssl-certs/server-a
 vault kv get secret/ssl-certs/server-b
 
 echo "Vault initialization completed successfully!"
-
-# Keep container running for a bit to see logs
-sleep 10

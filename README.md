@@ -1,4 +1,4 @@
-# Vault SSL Demo - Multi-Module Maven Project
+# spring-vault-ssl-bundle Demo 
 
 This demo shows how to store PEM certificates in HashiCorp Vault and use them with Spring Boot SSL bundles for secure communication between two servers.
 
@@ -23,7 +23,7 @@ This demo shows how to store PEM certificates in HashiCorp Vault and use them wi
 ## Project Structure
 
 ```
-spring-vault-ssl-demo/
+spring-vault-ssl-bundle-demo/
 ├── pom.xml                 # Root POM
 ├── common/                 # Shared DTOs and services
 │   ├── src/main/java/
