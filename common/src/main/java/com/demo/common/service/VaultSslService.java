@@ -2,15 +2,6 @@ package com.demo.common.service;
 
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-import org.springframework.vault.core.VaultTemplate;
-import org.springframework.vault.support.VaultResponse;
-
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManagerFactory;
 import java.io.ByteArrayInputStream;
 import java.security.KeyFactory;
 import java.security.KeyStore;
@@ -19,6 +10,14 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.vault.core.VaultTemplate;
+import org.springframework.vault.support.VaultResponse;
 
 @Service
 public class VaultSslService {
@@ -52,10 +51,12 @@ public class VaultSslService {
             KeyStore trustStore = createTrustStore(caCertificatePem);
 
             // Initialize SSL context
-            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            KeyManagerFactory keyManagerFactory =
+                    KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
             keyManagerFactory.init(keyStore, "changeit".toCharArray());
 
-            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            TrustManagerFactory trustManagerFactory =
+                    TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
             trustManagerFactory.init(trustStore);
 
             SSLContext sslContext = SSLContext.getInstance("TLS");
@@ -75,19 +76,27 @@ public class VaultSslService {
 
         // Parse certificate
         CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
-        String cleanCert = certificatePem.replaceAll("-----BEGIN CERTIFICATE-----", "").replaceAll("-----END CERTIFICATE-----", "").replaceAll("\\s", "");
+        String cleanCert = certificatePem
+                .replaceAll("-----BEGIN CERTIFICATE-----", "")
+                .replaceAll("-----END CERTIFICATE-----", "")
+                .replaceAll("\\s", "");
         byte[] certBytes = Base64.getDecoder().decode(cleanCert);
-        X509Certificate certificate = (X509Certificate) certFactory.generateCertificate(new ByteArrayInputStream(certBytes));
+        X509Certificate certificate =
+                (X509Certificate) certFactory.generateCertificate(new ByteArrayInputStream(certBytes));
 
         // Parse private key
-        String cleanPrivateKey = privateKeyPem.replaceAll("-----BEGIN PRIVATE KEY-----", "").replaceAll("-----END PRIVATE KEY-----", "").replaceAll("\\s", "");
+        String cleanPrivateKey = privateKeyPem
+                .replaceAll("-----BEGIN PRIVATE KEY-----", "")
+                .replaceAll("-----END PRIVATE KEY-----", "")
+                .replaceAll("\\s", "");
         byte[] keyBytes = Base64.getDecoder().decode(cleanPrivateKey);
         PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(keyBytes);
         KeyFactory keyFactory = KeyFactory.getInstance("RSA");
         PrivateKey privateKey = keyFactory.generatePrivate(keySpec);
 
         // Add to keystore
-        keyStore.setKeyEntry("client", privateKey, "changeit".toCharArray(), new java.security.cert.Certificate[]{certificate});
+        keyStore.setKeyEntry(
+                "client", privateKey, "changeit".toCharArray(), new java.security.cert.Certificate[] {certificate});
 
         return keyStore;
     }
@@ -97,15 +106,18 @@ public class VaultSslService {
         trustStore.load(null, null);
 
         CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
-        String cleanCaCert = caCertificatePem.replaceAll("-----BEGIN CERTIFICATE-----", "").replaceAll("-----END CERTIFICATE-----", "").replaceAll("\\s", "");
+        String cleanCaCert = caCertificatePem
+                .replaceAll("-----BEGIN CERTIFICATE-----", "")
+                .replaceAll("-----END CERTIFICATE-----", "")
+                .replaceAll("\\s", "");
         byte[] caCertBytes = Base64.getDecoder().decode(cleanCaCert);
-        X509Certificate caCertificate = (X509Certificate) certFactory.generateCertificate(new ByteArrayInputStream(caCertBytes));
+        X509Certificate caCertificate =
+                (X509Certificate) certFactory.generateCertificate(new ByteArrayInputStream(caCertBytes));
 
         trustStore.setCertificateEntry("ca", caCertificate);
 
         return trustStore;
     }
-
 
     public SslContext createNettySslContext(String secretPath) {
         try {
@@ -125,14 +137,19 @@ public class VaultSslService {
             KeyStore keyStore = createKeyStore(certificatePem, privateKeyPem);
             KeyStore trustStore = createTrustStore(caCertificatePem);
 
-            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            KeyManagerFactory keyManagerFactory =
+                    KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
             keyManagerFactory.init(keyStore, "changeit".toCharArray());
 
-            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            TrustManagerFactory trustManagerFactory =
+                    TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
             trustManagerFactory.init(trustStore);
 
             // Netty SslContext from key/trust managers
-            return SslContextBuilder.forClient().keyManager(keyManagerFactory).trustManager(trustManagerFactory).build();
+            return SslContextBuilder.forClient()
+                    .keyManager(keyManagerFactory)
+                    .trustManager(trustManagerFactory)
+                    .build();
 
         } catch (Exception e) {
             logger.error("Failed to create Netty SSL context from Vault", e);

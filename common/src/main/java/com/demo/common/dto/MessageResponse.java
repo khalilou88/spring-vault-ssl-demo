@@ -12,8 +12,7 @@ public class MessageResponse {
     @JsonProperty("receivedAt")
     private String receivedAt;
 
-    public MessageResponse() {
-    }
+    public MessageResponse() {}
 
     public MessageResponse(String response, String serverId, String receivedAt) {
         this.response = response;

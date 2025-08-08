@@ -9,8 +9,7 @@ public class MessageRequest {
     @JsonProperty("timestamp")
     private String timestamp;
 
-    public MessageRequest() {
-    }
+    public MessageRequest() {}
 
     public MessageRequest(String message, String timestamp) {
         this.message = message;
@@ -33,4 +32,3 @@ public class MessageRequest {
         this.timestamp = timestamp;
     }
 }
-

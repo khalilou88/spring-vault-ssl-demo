@@ -2,13 +2,12 @@ package com.demo.servera.controller;
 
 import com.demo.common.dto.MessageRequest;
 import com.demo.common.dto.MessageResponse;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -20,7 +19,10 @@ public class ServerAController {
     public ResponseEntity<MessageResponse> receiveMessage(@RequestBody MessageRequest request) {
         logger.info("Received message from client: {}", request.getMessage());
 
-        MessageResponse response = new MessageResponse("Hello from Server A! Received: " + request.getMessage(), "server-a", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        MessageResponse response = new MessageResponse(
+                "Hello from Server A! Received: " + request.getMessage(),
+                "server-a",
+                LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
 
         return ResponseEntity.ok(response);
     }
