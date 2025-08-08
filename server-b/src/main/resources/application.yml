@@ -3,7 +3,6 @@ server:
   ssl:
     enabled: true
     bundle: "server-b-ssl"
-#    bundle: "vault:secret/data/ssl-certs/server-b"
 
 spring:
   application:
@@ -24,12 +23,11 @@ spring:
     bundle:
       pem:
         server-b-ssl:
-          reload-on-update: true
+          reload-on-update: false
           keystore:
-            certificate: "vault:secret/data/ssl-certs/server-b:certificate"
-            private-key: "vault:secret/data/ssl-certs/server-b:private-key"
+            certificate: "vault:secret/data/ssl-certs/server-b"
           truststore:
-            certificate: "vault:secret/data/ssl-certs/server-b:ca-certificate"
+            certificate: "vault:secret/data/ssl-certs/server-b"
 
 logging:
   level:

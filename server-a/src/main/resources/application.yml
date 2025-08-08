@@ -23,12 +23,11 @@ spring:
     bundle:
       pem:
         server-a-ssl:
-          reload-on-update: true
+          reload-on-update: false
           keystore:
-            certificate: "vault:secret/ssl-certs/server-a:certificate"
-            private-key: "vault:secret/ssl-certs/server-a:private-key"
+            certificate: "vault:secret/ssl-certs/server-a"
           truststore:
-            certificate: "vault:secret/ssl-certs/server-a:ca-certificate"
+            certificate: "vault:secret/ssl-certs/server-a"
 
 app:
   server-b:
