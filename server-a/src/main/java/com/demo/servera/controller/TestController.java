@@ -16,7 +16,7 @@ public class TestController {
     }
 
     @PostMapping("/send-to-server-b")
-    public ResponseEntity<MessageResponse> testCommunication(@RequestParam String message) {
+    public ResponseEntity<MessageResponse> testCommunication(@RequestParam("message") String message) {
         MessageResponse response = clientService.sendMessageToServerB(message);
         return ResponseEntity.ok(response);
     }
