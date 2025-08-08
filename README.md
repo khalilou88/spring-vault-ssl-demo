@@ -5,10 +5,10 @@ This demo shows how to store PEM certificates in HashiCorp Vault and use them wi
 ## Architecture
 
 ```
-┌─────────────┐    HTTPS/SSL    ┌─────────────┐
+┌─────────────┐    HTTPS/SSL     ┌─────────────┐
 │   Server A  │ ───────────────► │   Server B  │
-│  Port 8443  │                 │  Port 8444  │
-└─────────────┘                 └─────────────┘
+│  Port 8443  │                  │  Port 8444  │
+└─────────────┘                  └─────────────┘
        │                               │
        │        Vault Token Auth       │
        └─────────────┬─────────────────┘
