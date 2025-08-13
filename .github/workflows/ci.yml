@@ -84,14 +84,33 @@ jobs:
           export VAULT_ADDR=http://localhost:8200
           export VAULT_TOKEN=demo-root-token
           
-          # Start Server B
-          ./mvnw spring-boot:run -pl server-b > server-b.log 2>&1 &
+          echo "Starting Server B..."
+          # Start Server B with verbose logging
+          ./mvnw spring-boot:run -pl server-b -Dspring-boot.run.jvmArguments="-Dlogging.level.org.springframework.vault=DEBUG -Dlogging.level.javax.net.ssl=DEBUG" > server-b.log 2>&1 &
           SERVER_B_PID=$!
           echo "SERVER_B_PID=$SERVER_B_PID" >> $GITHUB_ENV
+          echo "Server B started with PID: $SERVER_B_PID"
           
-          # Wait for Server B to start
-          timeout 120 bash -c 'until curl -k -s https://localhost:8444/api/v1/health; do sleep 3; echo "Waiting for Server B..."; done'
-          echo "Server B is ready"
+          # Wait for Server B to start with better error handling
+          echo "Waiting for Server B to start..."
+          for i in {1..40}; do
+          if curl -k -s https://localhost:8444/api/v1/health > /dev/null 2>&1; then
+           echo "Server B is ready!"
+           break
+          fi
+          if [ $i -eq 40 ]; then
+           echo "Server B failed to start after 2 minutes. Checking logs..."
+           echo "=== Last 50 lines of Server B log ==="
+           tail -50 server-b.log || echo "No logs found"
+           echo "=== Checking if process is still running ==="
+           ps aux | grep -v grep | grep $SERVER_B_PID || echo "Process not found"
+           echo "=== Checking port 8444 ==="
+           netstat -tlnp | grep 8444 || echo "Port 8444 not listening"
+           exit 1
+          fi
+          echo "Attempt $i/40: Server B not ready yet..."
+          sleep 3
+          done
 
       - name: Start Server A in background
         run: |
