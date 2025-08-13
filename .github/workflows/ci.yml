@@ -1,0 +1,210 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test Spring Vault SSL Bundle Demo
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Install OpenSSL
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openssl curl jq
+
+      - name: Start Vault using Docker Compose
+        run: |
+          # Start Vault using docker-compose
+          docker compose up -d vault
+          
+          # Wait for Vault to be ready
+          timeout 60 bash -c 'until curl -s http://localhost:8200/v1/sys/health; do sleep 2; echo "Waiting for Vault..."; done'
+          echo "Vault is ready"
+          
+          # Verify Vault status
+          docker compose ps
+          docker compose logs vault
+
+      - name: Generate SSL Certificates
+        run: |
+          chmod +x generate-certs.sh
+          ./generate-certs.sh
+          
+          # Verify certificates were created
+          ls -la certificates/
+          
+          # Validate certificate files
+          openssl x509 -in certificates/ca-cert.pem -text -noout | head -10
+          openssl x509 -in certificates/server-a-cert.pem -text -noout | grep -A2 "Subject:"
+          openssl x509 -in certificates/server-b-cert.pem -text -noout | grep -A2 "Subject:"
+
+      - name: Initialize Vault with SSL certificates
+        run: |
+          export VAULT_ADDR=http://localhost:8200
+          export VAULT_TOKEN=demo-root-token
+          
+          # Enable KV secrets engine
+          vault secrets enable -path=secret kv-v2
+          
+          # Store Server A certificates
+          vault kv put secret/ssl-certs/server-a \
+            certificate=@certificates/server-a-cert.pem \
+            private-key=@certificates/server-a-key.pem \
+            ca-certificate=@certificates/ca-cert.pem
+          
+          # Store Server B certificates  
+          vault kv put secret/ssl-certs/server-b \
+            certificate=@certificates/server-b-cert.pem \
+            private-key=@certificates/server-b-key.pem \
+            ca-certificate=@certificates/ca-cert.pem
+          
+          # Verify certificates are stored
+          echo "Verifying Server A certificates..."
+          vault kv get secret/ssl-certs/server-a
+          
+          echo "Verifying Server B certificates..."
+          vault kv get secret/ssl-certs/server-b
+
+      - name: Build project
+        run: |
+          ./mvnw clean compile -B -V
+          ./mvnw package -DskipTests -B
+
+      - name: Run unit tests
+        run: |
+          ./mvnw test -B
+
+      - name: Start Server B in background
+        run: |
+          export VAULT_ADDR=http://localhost:8200
+          export VAULT_TOKEN=demo-root-token
+          
+          # Start Server B
+          ./mvnw spring-boot:run -pl server-b > server-b.log 2>&1 &
+          SERVER_B_PID=$!
+          echo "SERVER_B_PID=$SERVER_B_PID" >> $GITHUB_ENV
+          
+          # Wait for Server B to start
+          timeout 120 bash -c 'until curl -k -s https://localhost:8444/api/v1/health; do sleep 3; echo "Waiting for Server B..."; done'
+          echo "Server B is ready"
+
+      - name: Start Server A in background
+        run: |
+          export VAULT_ADDR=http://localhost:8200
+          export VAULT_TOKEN=demo-root-token
+          
+          # Start Server A
+          ./mvnw spring-boot:run -pl server-a > server-a.log 2>&1 &
+          SERVER_A_PID=$!
+          echo "SERVER_A_PID=$SERVER_A_PID" >> $GITHUB_ENV
+          
+          # Wait for Server A to start
+          timeout 120 bash -c 'until curl -k -s https://localhost:8443/api/v1/health; do sleep 3; echo "Waiting for Server A..."; done'
+          echo "Server A is ready"
+
+      - name: Run integration tests
+        run: |
+          # Test server health endpoints
+          echo "Testing Server A health..."
+          curl -k -f https://localhost:8443/api/v1/health
+          
+          echo "Testing Server B health..."
+          curl -k -f https://localhost:8444/api/v1/health
+          
+          # Test direct message endpoints
+          echo "Testing direct message to Server A..."
+          curl -k -f -X POST https://localhost:8443/api/v1/message \
+            -H "Content-Type: application/json" \
+            -d '{"message":"Test message from CI","timestamp":"2024-01-01T10:00:00"}'
+          
+          echo "Testing direct message to Server B..."
+          curl -k -f -X POST https://localhost:8444/api/v1/message \
+            -H "Content-Type: application/json" \
+            -d '{"message":"Test message from CI","timestamp":"2024-01-01T10:00:00"}'
+          
+          # Test inter-server communication
+          echo "Testing Server A → Server B communication..."
+          response=$(curl -k -s https://localhost:8443/api/v1/test/ping-server-b)
+          echo "Ping response: $response"
+          
+          echo "Testing message forwarding..."
+          response=$(curl -k -s -X POST "https://localhost:8443/api/v1/test/send-to-server-b?message=Hello%20from%20CI")
+          echo "Forward response: $response"
+
+      - name: Run SSL certificate validation tests
+        run: |
+          # Verify certificate chain
+          echo "Verifying Server A certificate chain..."
+          echo | openssl s_client -connect localhost:8443 -servername server-a 2>/dev/null | openssl x509 -noout -subject -issuer
+          
+          echo "Verifying Server B certificate chain..."  
+          echo | openssl s_client -connect localhost:8444 -servername server-b 2>/dev/null | openssl x509 -noout -subject -issuer
+          
+          # Test certificate expiry (should be valid for 365 days)
+          echo "Checking certificate validity periods..."
+          echo | openssl s_client -connect localhost:8443 -servername server-a 2>/dev/null | openssl x509 -noout -dates
+          echo | openssl s_client -connect localhost:8444 -servername server-b 2>/dev/null | openssl x509 -noout -dates
+
+      - name: Collect application logs
+        if: always()
+        run: |
+          echo "=== Server A Logs ==="
+          cat server-a.log || echo "No Server A logs found"
+          
+          echo "=== Server B Logs ==="
+          cat server-b.log || echo "No Server B logs found"
+          
+          echo "=== Vault Logs ==="
+          docker compose logs vault || echo "No Vault logs available"
+
+      - name: Cleanup processes and Docker
+        if: always()
+        run: |
+          # Kill server processes if they exist
+          if [ -n "$SERVER_A_PID" ]; then
+            kill $SERVER_A_PID || true
+          fi
+          if [ -n "$SERVER_B_PID" ]; then
+            kill $SERVER_B_PID || true
+          fi
+          
+          # Kill any remaining Java processes
+          pkill -f "spring-boot:run" || true
+          
+          # Stop Docker Compose services
+          docker compose down -v || true
+          
+          # Wait a moment for cleanup
+          sleep 5
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs-and-certificates
+          path: |
+            server-a.log
+            server-b.log
+            certificates/
+          retention-days: 7
+
+
+
+
+
