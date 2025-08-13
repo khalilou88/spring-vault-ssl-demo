@@ -23,10 +23,18 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Install OpenSSL
+      - name: Install OpenSSL and Vault CLI
         run: |
           sudo apt-get update
           sudo apt-get install -y openssl curl jq
+          
+          # Install Vault CLI
+          curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+          sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+          sudo apt-get update && sudo apt-get install -y vault
+          
+          # Verify installation
+          vault version
 
       - name: Start Vault using Docker Compose
         run: |
