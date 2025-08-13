@@ -64,30 +64,11 @@ jobs:
 
       - name: Initialize Vault with SSL certificates
         run: |
-          export VAULT_ADDR=http://localhost:8200
-          export VAULT_TOKEN=demo-root-token
+          # Make sure the init script is executable
+          chmod +x vault-init.sh
           
-          # Enable KV secrets engine
-          vault secrets enable -path=secret kv-v2
-          
-          # Store Server A certificates
-          vault kv put secret/ssl-certs/server-a \
-            certificate=@certificates/server-a-cert.pem \
-            private-key=@certificates/server-a-key.pem \
-            ca-certificate=@certificates/ca-cert.pem
-          
-          # Store Server B certificates  
-          vault kv put secret/ssl-certs/server-b \
-            certificate=@certificates/server-b-cert.pem \
-            private-key=@certificates/server-b-key.pem \
-            ca-certificate=@certificates/ca-cert.pem
-          
-          # Verify certificates are stored
-          echo "Verifying Server A certificates..."
-          vault kv get secret/ssl-certs/server-a
-          
-          echo "Verifying Server B certificates..."
-          vault kv get secret/ssl-certs/server-b
+          # Run the vault initialization script
+          ./vault-init.sh
 
       - name: Build project
         run: |
