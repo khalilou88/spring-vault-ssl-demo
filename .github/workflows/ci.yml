@@ -112,14 +112,33 @@ jobs:
           export VAULT_ADDR=http://localhost:8200
           export VAULT_TOKEN=demo-root-token
           
-          # Start Server A
-          ./mvnw spring-boot:run -pl server-a > server-a.log 2>&1 &
+          echo "Starting Server A..."
+          # Start Server A with verbose logging
+          ./mvnw spring-boot:run -pl server-a -Dspring-boot.run.jvmArguments="-Dlogging.level.org.springframework.vault=DEBUG -Dlogging.level.javax.net.ssl=DEBUG" > server-a.log 2>&1 &
           SERVER_A_PID=$!
           echo "SERVER_A_PID=$SERVER_A_PID" >> $GITHUB_ENV
+          echo "Server A started with PID: $SERVER_A_PID"
           
-          # Wait for Server A to start
-          timeout 120 bash -c 'until curl -k -s https://localhost:8443/api/v1/health; do sleep 3; echo "Waiting for Server A..."; done'
-          echo "Server A is ready"
+          # Wait for Server A to start with better error handling
+          echo "Waiting for Server A to start..."
+          for i in {1..40}; do
+          if curl -k -s https://localhost:8443/api/v1/health > /dev/null 2>&1; then
+           echo "Server A is ready!"
+           break
+          fi
+          if [ $i -eq 40 ]; then
+           echo "Server A failed to start after 2 minutes. Checking logs..."
+           echo "=== Last 50 lines of Server A log ==="
+           tail -50 server-a.log || echo "No logs found"
+           echo "=== Checking if process is still running ==="
+           ps aux | grep -v grep | grep $SERVER_A_PID || echo "Process not found"
+           echo "=== Checking port 8443 ==="
+           netstat -tlnp | grep 8443 || echo "Port 8443 not listening"
+           exit 1
+          fi
+          echo "Attempt $i/40: Server A not ready yet..."
+          sleep 3
+          done
 
       - name: Run integration tests
         run: |
