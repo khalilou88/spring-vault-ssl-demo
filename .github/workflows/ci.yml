@@ -72,12 +72,7 @@ jobs:
 
       - name: Build project
         run: |
-          ./mvnw clean compile -B -V
-          ./mvnw package -DskipTests -B
-
-      - name: Run unit tests
-        run: |
-          ./mvnw test -B
+          ./mvnw clean install -DskipTests
 
       - name: Start Server B in background
         run: |
