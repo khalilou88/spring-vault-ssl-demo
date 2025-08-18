@@ -34,4 +34,4 @@ logging:
     com.demo: DEBUG
     org.springframework.vault: DEBUG
     org.springframework.cloud.vault: DEBUG
-    io.github.gridadev: DEBUG
+    com.gridatek: DEBUG
